@@ -19,7 +19,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-st.title('Small RAG App')
+
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -33,9 +34,6 @@ texts = text_splitter.split_documents(documents)
 docembeddings = FAISS.from_documents(texts, OpenAIEmbeddings())
 docembeddings.save_local("llm_faiss_index")
 docembeddings = FAISS.load_local("llm_faiss_index",OpenAIEmbeddings())
-
-
-
 
 prompt_template = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
@@ -64,7 +62,7 @@ PROMPT = PromptTemplate(
 )
 chain = load_qa_chain(OpenAI(temperature=0), chain_type="map_rerank", return_intermediate_steps=True, prompt=PROMPT)
 
-
+# @st.cache_data
 def getanswer(query):
     relevant_chunks = docembeddings.similarity_search_with_score(query,k=2)
     chunk_docs=[]
@@ -77,7 +75,10 @@ def getanswer(query):
     output={"Answer":results["output_text"],"Reference":text_reference}
     return output
 
-
+# Streamlit app
+st.title('Small RAG App')
+query = st.text_input('Enter your question about Generative AI topics covered in lectures 1-3:')
+st.write('RAG App Response:', getanswer(query))
 
 @app.route('/docqna',methods = ["POST"])
 def processclaim():
@@ -88,5 +89,6 @@ def processclaim():
         return output
     except:
         return jsonify({"Status":"Failure --- some error occured"})
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8096, debug=False)
+    app.run(host="0.0.0.0", port=8097, debug=False)
