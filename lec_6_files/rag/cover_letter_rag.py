@@ -24,7 +24,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-loader = DirectoryLoader(f'building_codes', glob="./*.pdf", loader_cls=PyPDFLoader)
+# Load resume and cover letter files
+loader = DirectoryLoader(f'cover_letters', glob="./*.docx", loader_cls=Docx2txtLoader)
 documents = loader.load()
 chunk_size_value = 1000
 chunk_overlap=100
@@ -34,7 +35,7 @@ docembeddings = FAISS.from_documents(texts, OpenAIEmbeddings())
 docembeddings.save_local("llm_faiss_index")
 docembeddings = FAISS.load_local("llm_faiss_index",OpenAIEmbeddings())
 
-prompt_template = """Use the following pieces of context to answer questions pertaining to structural engineering. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+prompt_template = """Use the following pieces of context to answer questions pertaining to Vaidas Razgaitis' work experience. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
 This should be in the following format:
 
@@ -75,19 +76,7 @@ def getanswer(query):
     return output
 
 # Streamlit app
-st.title('Small RAG App')
-query = st.text_input('Enter your question about concrete and steel design in structural engineering:')
-st.write('RAG App Response:', getanswer(query))
-
-@app.route('/docqna',methods = ["POST"])
-def processclaim():
-    try:
-        input_json = request.get_json(force=True)
-        query = input_json["query"]
-        output=getanswer(query)
-        return output
-    except:
-        return jsonify({"Status":"Failure --- some error occured"})
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8097, debug=False)
+    st.title("Vaidas Razgaitis' Professional bio")
+    question = st.text_input("Enter a question about Vaidas' work experience:")
+    st.write('Cover letter bot🤖 says:', getanswer(question))
