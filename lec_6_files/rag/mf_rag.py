@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import JSONLoader
 from langchain_community.document_loaders import Docx2txtLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
@@ -18,13 +19,18 @@ from dotenv import load_dotenv
 import streamlit as st 
 import pandas as pd
 import numpy as np
+import pprint
+
+import json
+from pathlib import Path
+from pprint import pprint
 
 load_dotenv()
 
 app = Flask(__name__)
 
-# Load resume and cover letter files
-loader = DirectoryLoader(f'cover_letters', glob="./*.docx", loader_cls=Docx2txtLoader)
+# Load docs describing March Fitness
+loader = DirectoryLoader(f'mf_rules', glob="./*.docx", loader_cls=Docx2txtLoader)
 documents = loader.load()
 chunk_size_value = 1000
 chunk_overlap=100
@@ -34,7 +40,13 @@ docembeddings = FAISS.from_documents(texts, OpenAIEmbeddings())
 docembeddings.save_local("llm_faiss_index")
 docembeddings = FAISS.load_local("llm_faiss_index",OpenAIEmbeddings())
 
-prompt_template = """Use the following pieces of context to answer questions pertaining to Vaidas Razgaitis' work experience. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+# import JSON with scoring values
+# file_path='./activity_types.json'
+# data = json.loads(Path(file_path).read_text())
+# loader = JSONLoader(file_path='./activity_types.json', jq_schema=".", json_lines=False, text_content=False)
+# documents = loader.load()
+
+prompt_template = """Use the following pieces of context, that explain the rules to a fitness competition, to answer questions pertaining to rules and scoring. If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
 This should be in the following format:
 
@@ -59,6 +71,8 @@ PROMPT = PromptTemplate(
     input_variables=["context", "question"],
     output_parser=output_parser
 )
+
+
 chain = load_qa_chain(OpenAI(temperature=0), chain_type="map_rerank", return_intermediate_steps=True, prompt=PROMPT)
 
 @st.cache_data
@@ -76,6 +90,6 @@ def getanswer(query):
 
 # Streamlit app
 if __name__ == "__main__":
-    st.title("Vaidas Razgaitis' Professional bio")
-    question = st.text_input("Enter a question about Vaidas' work experience:")
-    st.write('Cover letter bot🤖 says:', getanswer(question))
+    st.title("March fitness rules chatbot")
+    question = st.text_input("Enter a question about rules or scoring in March fitness:")
+    st.write("MF admin chatbot says:", getanswer(question))
