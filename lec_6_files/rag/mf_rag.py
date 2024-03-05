@@ -72,7 +72,6 @@ PROMPT = PromptTemplate(
     output_parser=output_parser
 )
 
-
 chain = load_qa_chain(OpenAI(temperature=0), chain_type="map_rerank", return_intermediate_steps=True, prompt=PROMPT)
 
 @st.cache_data

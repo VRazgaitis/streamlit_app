@@ -1,0 +1,8 @@
+Flask
+streamlit
+pandas
+numpy
+python-dotenv
+langchain-community
+langchain-openai
+langchain
